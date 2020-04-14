@@ -12,8 +12,31 @@ public class Habitat {
     }
 
     public static void Update(long time) {
-        if (time % NOrdinary == 0 && Math.random() < POrdinary) Singleton.getLink().add(factory.creatOrdinary(Math.random(), Math.random()));
-        if (time % NAlbino == 0 && (double)Albino.getAlbinoQuantity() / Rabbit.getAllQuantity() < KAlbino) Singleton.getLink().add(factory.creatAlbino(Math.random(), Math.random()));
+        if (time % NOrdinary == 0 && Math.random() < POrdinary) {
+            Singleton.getVector().add(factory.creatOrdinary(Math.random(), Math.random(), time));
+            Singleton.getTreeSetID().add(Singleton.getVector().lastElement().ID);
+            Singleton.getHashMap().put(Singleton.getVector().lastElement().ID, Singleton.getVector().lastElement().BirthTime);
+        }
+        if (time % NAlbino == 0 && (double)Albino.getAlbinoQuantity() / Rabbit.getAllQuantity() < KAlbino) {
+            Singleton.getVector().add(factory.creatAlbino(Math.random(), Math.random(), time));
+            Singleton.getTreeSetID().add(Singleton.getVector().lastElement().ID);
+            Singleton.getHashMap().put(Singleton.getVector().lastElement().ID, Singleton.getVector().lastElement().BirthTime);
+        }
+        for (int i = 0; i < Singleton.getVector().size(); i++) {
+            if (Singleton.getVector().get(i) instanceof Ordinary) {
+                if (time == Singleton.getVector().get(i).BirthTime + Ordinary.TimeOfLife) {
+                    Rabbit.AllQuantity--;
+                    Ordinary.OrdinaryQuantity--;
+                    Singleton.getVector().remove(i);
+                }
+            } else {
+                if (time == Singleton.getVector().get(i).BirthTime + Albino.TimeOfLife) {
+                    Rabbit.AllQuantity--;
+                    Albino.AlbinoQuantity--;
+                    Singleton.getVector().remove(i);
+                }
+            }
+        }
         gui.Render();
     }
 

@@ -22,14 +22,25 @@ public class GUI extends JFrame {
 
     JPanel jPanelImage = new JPanel(), jPanelControl = new JPanel();
     JButton jButtonStart = new JButton("Старт"), jButtonStop = new JButton("Стоп");
+    JButton jButtonObjects = new JButton("Текущие объекты");
     JLabel jLabel = new JLabel();
+    JLabel jLabelK = new JLabel("Задать K:");
+    JLabel jLabelP = new JLabel("Задать P:");
+    JLabel jLabelNOrdinary = new JLabel("Задать N для обыкновенных:");
+    JLabel jLabelNAlbino = new JLabel("Задать N для альбиносов:");
+    JLabel jLabelBirthTimeOrdinary = new JLabel("Задать время жизни обыкновенных:");
+    JLabel jLabelBirthTimeAlbino = new JLabel("Задать время жизни альбиносов:");
     JDialog jDialog = new JDialog(this,"Информация о симуляции", true);
+    JDialog jDialogObjects = new JDialog(this,"Текущие объекты",true);
     JTextArea jTextArea = new JTextArea();
+    JTextArea jTextAreaObjects = new JTextArea();
     JButton jButtonOk = new JButton("Окей"), jButtonCancel = new JButton("Отмена");
     JComboBox jComboBox = new JComboBox();
     JList jList = new JList();
     JTextField jTextFieldNOrdinary = new JTextField();
     JTextField jTextFieldNAlbino = new JTextField();
+    JTextField jTextFieldLiveTimeOrdinary = new JTextField();
+    JTextField jTextFieldLiveTimeAlbino = new JTextField();
 
     Boolean RadioButtonBoolean = false;
 
@@ -42,6 +53,11 @@ public class GUI extends JFrame {
         jDialog.add(jButtonOk);
         jDialog.add(jButtonCancel);
 
+        jDialogObjects.setSize(300, 400);
+        jDialogObjects.setLocation(350,200);
+        jTextAreaObjects.setEditable(false);
+        jDialogObjects.add(jTextAreaObjects);
+
         try {
             BackgroundImg = ImageIO.read(new File("./Images/Field.jpg"));
         } catch (IOException Ex) {
@@ -51,7 +67,7 @@ public class GUI extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setPreferredSize(new Dimension(Width, Height));
         setFocusable(true);
-        setLocation(300,230);
+        setLocation(200,0);
         creatMenuBar();
         creatPanelUI(getContentPane());
         pack();
@@ -87,6 +103,8 @@ public class GUI extends JFrame {
         try {
             Habitat.NOrdinary = Integer.parseInt(jTextFieldNOrdinary.getText());
             Habitat.NAlbino = Integer.parseInt(jTextFieldNAlbino.getText());
+            Ordinary.TimeOfLife = Integer.parseInt(jTextFieldLiveTimeOrdinary.getText());
+            Albino.TimeOfLife = Integer.parseInt(jTextFieldLiveTimeAlbino.getText());
         }
         catch (NumberFormatException ex) {
             JDialog jDialogEx = new JDialog(this,"Ошибка!",true);
@@ -100,6 +118,8 @@ public class GUI extends JFrame {
 
             jTextFieldNOrdinary.setText("10");
             jTextFieldNAlbino.setText("20");
+            jTextFieldLiveTimeOrdinary.setText("100");
+            jTextFieldLiveTimeAlbino.setText("80");
 
             jButtonExOk.addActionListener(new ActionListener() {
                 @Override
@@ -132,7 +152,9 @@ public class GUI extends JFrame {
     private void ActionStop() {
         timer.cancel();
         flag_is_work = false;
-        Singleton.getLink().clear();
+        Singleton.getVector().clear();
+        Singleton.getHashMap().clear();
+        Singleton.getTreeSetID().clear();
         jButtonStop.setEnabled(false);
         jButtonStart.setEnabled(true);
         jTextArea.setText("Кроликов всего " + Rabbit.getAllQuantity() +
@@ -155,6 +177,15 @@ public class GUI extends JFrame {
         setVisible(true);
     }
 
+    private void ActionShowObjects() {
+        String string = new String();
+        for (Rabbit rabbit : Singleton.getVector()) {
+            string += (rabbit.ID + " "  + rabbit.BirthTime + "\n");
+        }
+        jTextAreaObjects.setText("Ключ/Время рождения\n" + string);
+        jDialogObjects.setVisible(true);
+    }
+
     public void Render() {
         //Двойная буфферизация. Рисую в BufferedImage, и только готовое вывожу в фрейм (устраняю мерцание)
         int w = jPanelImage.getWidth()*2, h = jPanelImage.getHeight()*2; //умножаю на 2, потому что падает качество
@@ -162,7 +193,7 @@ public class GUI extends JFrame {
         Graphics offScreenGraphics= offScreenImage.getGraphics();
 
         offScreenGraphics.drawImage(BackgroundImg, 0,0, w, h,null);
-        for (Rabbit rab : Singleton.getLink()) {
+        for (Rabbit rab : Singleton.getVector()) {
             offScreenGraphics.drawImage(rab.getImg(), (int)(rab.getX()*w),(int)(rab.getY()*h), (int)(RabbitSize*w), (int)(RabbitSize*h), null);
         }
 
@@ -215,17 +246,28 @@ public class GUI extends JFrame {
 
         jTextFieldNOrdinary.setText("10");
         jTextFieldNAlbino.setText("20");
+        jTextFieldLiveTimeOrdinary.setText("100");
+        jTextFieldLiveTimeAlbino.setText("80");
 
-        jPanelControl.setLayout(new GridLayout(10,1,5,5));
+        jPanelControl.setLayout(new GridLayout(19,1,5,5));
         jPanelControl.add(jButtonStart);
         jPanelControl.add(jButtonStop);
         jPanelControl.add(jRadioButtonShowTime);
         jPanelControl.add(jRadioButtonNoShowTime);
         jPanelControl.add(jCheckBoxShowInf);
+        jPanelControl.add(jLabelP);
         jPanelControl.add(jComboBox);
+        jPanelControl.add(jLabelK);
         jPanelControl.add(jPanelList);
+        jPanelControl.add(jLabelNOrdinary);
         jPanelControl.add(jTextFieldNOrdinary);
+        jPanelControl.add(jLabelNAlbino);
         jPanelControl.add(jTextFieldNAlbino);
+        jPanelControl.add(jLabelBirthTimeOrdinary);
+        jPanelControl.add(jTextFieldLiveTimeOrdinary);
+        jPanelControl.add(jLabelBirthTimeAlbino);
+        jPanelControl.add(jTextFieldLiveTimeAlbino);
+        jPanelControl.add(jButtonObjects);
         jPanelControl.add(jLabel);
 
         jButtonStart.addActionListener(new ActionListener() {
@@ -240,6 +282,11 @@ public class GUI extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 ActionStop();
             }
+        });
+
+        jButtonObjects.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) { ActionShowObjects(); }
         });
 
         jCheckBoxShowInf.addItemListener(new ItemListener() {
@@ -297,7 +344,9 @@ public class GUI extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 jDialog.setVisible(false);
                 cumulativePeriod = 0;
-                Singleton.getLink().clear();
+                Singleton.getVector().clear();
+                Singleton.getHashMap().clear();
+                Singleton.getTreeSetID().clear();
                 jButtonStop.setEnabled(false);
                 jButtonStart.setEnabled(true);
             }

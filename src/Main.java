@@ -2,7 +2,7 @@ public class Main {
 
     public static void main(String[] args) {
 
-        Habitat h = new Habitat(900,400);
+        Habitat h = new Habitat(1200,800);
 
     }
 }

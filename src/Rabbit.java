@@ -6,7 +6,10 @@ import java.io.IOException;
 public abstract class Rabbit implements IBehaviour {
 
     public static int AllQuantity = 0;
+    private static long staticID = 0;
     protected double X, Y;
+    protected long BirthTime;
+    protected long ID;
     protected BufferedImage img;
 
     protected void openImage(String pathname) {
@@ -23,14 +26,20 @@ public abstract class Rabbit implements IBehaviour {
 
     Rabbit() { AllQuantity++; }
 
-    Rabbit(double X, double Y) {
+    Rabbit(double X, double Y, long BirthTime) {
+        ID = staticID++;
         AllQuantity++;
         this.X = X;
         this.Y = Y;
+        this.BirthTime = BirthTime;
     }
 
     public static int getAllQuantity() {
         return AllQuantity;
+    }
+
+    public long getID() {
+        return ID;
     }
 
     @Override

@@ -1,9 +1,9 @@
 public interface AbstactFactory {
 
     Ordinary creatOrdinary();
-    Ordinary creatOrdinary(double X, double Y);
+    Ordinary creatOrdinary(double X, double Y, long BirthTime);
 
     Albino creatAlbino();
-    Albino creatAlbino(double X, double Y);
+    Albino creatAlbino(double X, double Y, long BirthTime);
 
 }
