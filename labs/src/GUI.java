@@ -4,7 +4,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.Map;
 import java.util.TimerTask;
+import java.util.TreeMap;
 
 import static javax.swing.BoxLayout.Y_AXIS;
 
@@ -18,6 +20,7 @@ class GUI extends JFrame { //класс основного окна програ
         classRoom() {
             super();
         }
+
     }
     public class controlPanel extends JPanel { // панель управления
 
@@ -34,8 +37,8 @@ class GUI extends JFrame { //класс основного окна програ
                 textPanel.add(text);
 
                 JPanel buttons = new JPanel(new FlowLayout()); //панель в которой 2 кнопки
-                startButton = new JButton("START");
-                stopButton = new JButton("STOP");
+                startButton = new JButton("Старт");
+                stopButton = new JButton("Стоп");
                 startButton.setRequestFocusEnabled(false);
                 stopButton.setRequestFocusEnabled(false);
                 stopButton.setEnabled(false);
@@ -156,6 +159,60 @@ class GUI extends JFrame { //класс основного окна програ
             }
 
         }
+        class lifeTimePanel extends JPanel {  // панель с тектовыми полями для указания времени жизни объектов
+
+            public JTextField maleStudentsSetLifeTime;
+            public JTextField femaleStudentsSetLifeTime;
+            lifeTimePanel() {
+
+                //панель с текстовыми полями для указания периода рождения объектов
+                super();
+                this.setLayout(new FlowLayout());
+
+                JPanel maleStudentsLifeTime = new JPanel();
+                maleStudentsSetLifeTime = new JTextField(2);
+                JLabel textLifeTimedMaleStudent = new JLabel("Время жизни студентов: ");
+                maleStudentsLifeTime.add(textLifeTimedMaleStudent);
+                maleStudentsLifeTime.add(maleStudentsSetLifeTime);
+
+                JPanel femaleStudentsLifeTime = new JPanel();
+                femaleStudentsSetLifeTime = new JTextField(2);
+                JLabel textLifeTimeFemaleStudent = new JLabel("Время жизни студенток: ");
+                femaleStudentsLifeTime.add(textLifeTimeFemaleStudent);
+                femaleStudentsLifeTime.add(femaleStudentsSetLifeTime);
+
+                this.add(maleStudentsLifeTime);
+                this.add(femaleStudentsLifeTime);
+
+            }
+
+            public int getMaleLifeTime() {
+                String maleText = maleStudentsSetLifeTime.getText();
+                int lifeTime;
+                try {
+                    lifeTime = Integer.parseInt(maleText);
+                }
+                catch (Exception E) {
+                    maleStudentsSetLifeTime.setText("5");
+                    this.grabFocus();
+                    lifeTime = 5;
+                }
+                return lifeTime;
+            }
+            public int getFemaleLifeTime() {
+                String femaleText = femaleStudentsSetLifeTime.getText();
+                int lifeTime;
+                try {
+                    lifeTime = Integer.parseInt(femaleText);
+                }
+                catch (Exception E) {
+                    femaleStudentsSetLifeTime.setText("4");
+                    this.grabFocus();
+                    lifeTime = 4;
+                }
+                return lifeTime;
+            }
+        }
         class comboBoxPanel extends JPanel {
 
             public JComboBox maleComboBox;
@@ -197,13 +254,28 @@ class GUI extends JFrame { //класс основного окна програ
                 return chance;
             }
         }
+        class showAliveStudentsPanel extends JPanel {
+
+            public JButton button;
+            showAliveStudentsPanel() {
+                super();
+
+                button = new JButton("Показать живых");
+                button.setRequestFocusEnabled(false);
+
+                this.add(button);
+            }
+        }
+
 
         public startStopButtonsPanel startStopButtonsPanel;
         public showDialogPanel showDialogPanel;
         public showSimulationTimeInfoPanel showSimulationTimeInfoPanel;
         public showSimulationTimePanel showSimulationTimePanel;
         public birthPeriodPanel birthPeriodPanel;
+        public lifeTimePanel lifeTimePanel;
         public comboBoxPanel comboBoxPanel;
+        public showAliveStudentsPanel showAliveStudentsPanel;
 
         controlPanel() {
             super();
@@ -215,7 +287,9 @@ class GUI extends JFrame { //класс основного окна програ
             showDialogPanel = new showDialogPanel();
             showSimulationTimeInfoPanel = new showSimulationTimeInfoPanel();
             birthPeriodPanel = new birthPeriodPanel();
+            lifeTimePanel = new lifeTimePanel();
             comboBoxPanel = new comboBoxPanel();
+            showAliveStudentsPanel = new showAliveStudentsPanel();
 
             showSimulationTimePanel = new showSimulationTimePanel();
             showSimulationTimePanel.setVisible(false);
@@ -224,7 +298,9 @@ class GUI extends JFrame { //класс основного окна програ
             this.add(showSimulationTimeInfoPanel);
             this.add(showSimulationTimePanel);
             this.add(birthPeriodPanel);
+            this.add(lifeTimePanel);
             this.add(comboBoxPanel);
+            this.add(showAliveStudentsPanel);
             this.add(startStopButtonsPanel);
 
         }
@@ -245,12 +321,43 @@ class GUI extends JFrame { //класс основного окна програ
             JPanel buttonsPanel = new JPanel();
             dialogOk = new JButton("Ок");
             dialogCancel = new JButton("Отмена");
+            dialogOk.setRequestFocusEnabled(false);
+            dialogCancel.setRequestFocusEnabled(false);
             buttonsPanel.add(dialogOk);
             buttonsPanel.add(dialogCancel);
 
             JPanel textAreaPanel = new JPanel();
             textArea = new JTextArea();
+            textArea.setEditable(false);
+            textArea.setRequestFocusEnabled(false);
             textArea.setText("Информация о симуляции.");
+            textAreaPanel.add(textArea);
+
+            this.add(textAreaPanel, BorderLayout.CENTER);
+            this.add(buttonsPanel, BorderLayout.SOUTH);
+
+        }
+    }
+    public class showAliveStudentsDialogWindow extends JDialog {
+
+        public JButton dialogOk;
+        public JTextArea textArea;
+        showAliveStudentsDialogWindow(JFrame parent) { //диалоговое окно, которое показывает информацию о симуляции
+
+            super(parent, "Информация о живых.", true );
+            this.setLayout(new BorderLayout());
+            this.setSize(300,300);
+
+
+            JPanel buttonsPanel = new JPanel();
+            dialogOk = new JButton("Ок");
+            dialogOk.setRequestFocusEnabled(false);
+            buttonsPanel.add(dialogOk);
+
+            JPanel textAreaPanel = new JPanel();
+            textArea = new JTextArea();
+            textArea.setEditable(false);
+            textArea.setRequestFocusEnabled(false);
             textAreaPanel.add(textArea);
 
             this.add(textAreaPanel, BorderLayout.CENTER);
@@ -280,6 +387,7 @@ class GUI extends JFrame { //класс основного окна програ
 
     public classRoom classRoom;
     public dialogWindow dialogWindow;
+    public showAliveStudentsDialogWindow showAliveStudentsDialogWindow;
     public controlPanel controlPanel;
     public menu menu;
     GUI () {
@@ -289,6 +397,7 @@ class GUI extends JFrame { //класс основного окна програ
         classRoom = new classRoom();
         controlPanel = new controlPanel();
         dialogWindow = new dialogWindow(this);
+        showAliveStudentsDialogWindow = new showAliveStudentsDialogWindow(this);
         menu = new menu();
 
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -312,12 +421,12 @@ class GUI extends JFrame { //класс основного окна програ
             public void keyPressed(KeyEvent keyEvent) {
                 switch (keyEvent.getKeyCode()) {
                     case 66: //клавиша B - начало симуляции
-                        habitat.startSimulation(controlPanel.showSimulationTimePanel.timeInfo, classRoom, controlPanel.birthPeriodPanel, controlPanel.comboBoxPanel);
+                        habitat.startSimulation(controlPanel, classRoom);
                         checkAllButtons(habitat);
                         break;
 
                     case 69: //клавиша  E - конец симуляции
-                        habitat.stopSimulation(controlPanel.showSimulationTimePanel.timeInfo, dialogWindow, classRoom, dialogWindow);
+                        habitat.stopSimulation(controlPanel.showSimulationTimePanel.timeInfo, dialogWindow, classRoom);
                         checkAllButtons(habitat);
                         break;
                     case 84: //клавиша T - показывание информации
@@ -358,20 +467,21 @@ class GUI extends JFrame { //класс основного окна програ
         ActionListener startSimulation = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
-                habitat.startSimulation(controlPanel.showSimulationTimePanel.timeInfo, classRoom, controlPanel.birthPeriodPanel, controlPanel.comboBoxPanel);
+                habitat.startSimulation(controlPanel, classRoom);
                 checkAllButtons(habitat);
+                focusMainWindow();
             }
         };
         ActionListener stopSimulation = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
-                habitat.stopSimulation(controlPanel.showSimulationTimePanel.timeInfo, dialogWindow, classRoom, dialogWindow);
+                habitat.stopSimulation(controlPanel.showSimulationTimePanel.timeInfo, dialogWindow, classRoom);
                 checkAllButtons(habitat);
             }
         };
         controlPanel.startStopButtonsPanel.startButton.addActionListener(startSimulation);
         controlPanel.startStopButtonsPanel.stopButton.addActionListener(stopSimulation);
-        KeyListener birthPeriodPanelKeyListener = new KeyListener() { // при нажатии на клавишу Enter - фокус сбрасывается
+        KeyListener EnterKeyListener = new KeyListener() { // при нажатии на клавишу Enter - фокус сбрасывается
             @Override
             public void keyTyped(KeyEvent keyEvent) {
 
@@ -389,8 +499,40 @@ class GUI extends JFrame { //класс основного окна програ
 
             }
         };
-        controlPanel.birthPeriodPanel.maleStudentsSetPeriod.addKeyListener(birthPeriodPanelKeyListener);
-        controlPanel.birthPeriodPanel.femaleStudentsSetPeriod.addKeyListener(birthPeriodPanelKeyListener);
+        controlPanel.birthPeriodPanel.maleStudentsSetPeriod.addKeyListener(EnterKeyListener);
+        controlPanel.birthPeriodPanel.femaleStudentsSetPeriod.addKeyListener(EnterKeyListener);
+        controlPanel.lifeTimePanel.maleStudentsSetLifeTime.addKeyListener(EnterKeyListener);
+        controlPanel.lifeTimePanel.femaleStudentsSetLifeTime.addKeyListener(EnterKeyListener);
+        controlPanel.showAliveStudentsPanel.button.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                TreeMap<Integer, Long> treeMap = habitat.singleton.getTreeMap();
+                String text = "";
+                int count = treeMap.size();
+                for(Map.Entry e : treeMap.entrySet()) {
+                    if (count == 1) {
+                        text+= "id: " + e.getKey() + " Время смерти: " + ((long) e.getValue()) /1000 + " с";
+                    }
+                    else text+= "id: " + e.getKey() + " Время смерти: " + ((long) e.getValue()) /1000 + " с\n";
+                    count--;
+                }
+                showAliveStudentsDialogWindow.textArea.setText(text);
+                showAliveStudentsDialogWindow.setVisible(true);
+            }
+        });
+
+        showAliveStudentsDialogWindow.dialogOk.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                showAliveStudentsDialogWindow.setVisible(false);
+            }
+        });
+        showAliveStudentsDialogWindow.dialogOk.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                showAliveStudentsDialogWindow.setVisible(false);
+            }
+        });
 
         dialogWindow.dialogOk.addActionListener(new ActionListener() {
             @Override
@@ -416,6 +558,8 @@ class GUI extends JFrame { //класс основного окна програ
                 }, habitat.period, habitat.period);
             }
         });
+
+
 
         menu.startSimulation.addActionListener(startSimulation);
         menu.stopSimulation.addActionListener(stopSimulation);
