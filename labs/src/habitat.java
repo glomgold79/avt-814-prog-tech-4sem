@@ -4,6 +4,7 @@ import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
 
+
 class Habitat { //класс среды с хранящимися данными
 
     final Timer[] timer = {new Timer()};
@@ -36,10 +37,18 @@ class Habitat { //класс среды с хранящимися данными
     boolean infoVision = false; // показывается ли информация о времени симуляции
     boolean simulation = false; //идёт ли симуляция
     boolean infoAfterFinishVisible = false; //будет ли отображено диалоговое окно после остановки симуляции
+    boolean threadsOnPause = false; // нахожятся ли потоки в режиме сна (если остановить симуляцию и потом запустить еще раз)
+
+    maleStudentsAI maleAI; // поток поведения студентов
+    //femaleStudentsAI femaleAI; // поток поведения студенток
+
 
     public Habitat(int x, int y) {
         windowX = x;
         windowY = y;
+
+        maleAI = new maleStudentsAI();
+        //femaleAI = new femaleStudentsAI();
     }
 
     public void update(long timeFromBeginning, JPanel classRoom) { //метод обновления среды, генерация новых студентов
@@ -50,7 +59,7 @@ class Habitat { //класс среды с хранящимися данными
             double random = Math.random();
             if (0 < random & random < P1) {
                 singleton.addStudent(new maleStudent((int) (Math.random() * windowX), (int) (Math.random() * windowY), timeFromBeginning, timeFromBeginning + lifeTimeMale * 1000, studentID++));
-                student student = singleton.getStudent(numberOfStudents);
+                //student student = singleton.getStudent(numberOfStudents);
                 maleStudents++;
                 numberOfStudents++;
                 System.out.println("Студент сгенерирован");
@@ -69,7 +78,6 @@ class Habitat { //класс среды с хранящимися данными
         singleton.checkList(timeFromBeginning, this);
         drawAll(classRoom);
 
-
     }
 
     public void drawAll(JPanel classRoom) {
@@ -77,12 +85,13 @@ class Habitat { //класс среды с хранящимися данными
         Graphics g = classRoom.getGraphics();
         g.clearRect(0,0, classRoom.getWidth(), classRoom.getHeight());
         LinkedList<student> myClass = singleton.getStudents();
-        for (int i = 0; i < myClass.size(); i++) {
-            student student = myClass.get(i);
-            if (student instanceof maleStudent) {
-                g.drawImage(maleStudent.maleStudentImage, student.x, student.y, null);
+        synchronized (myClass) {
+            for (int i = 0; i < myClass.size(); i++) {
+                student student = myClass.get(i);
+                if (student instanceof maleStudent) {
+                    g.drawImage(maleStudent.maleStudentImage, student.getX(), student.getY(), null);
+                } else g.drawImage(femaleStudent.femaleStudentImage, student.getX(), student.getY(), null);
             }
-            else g.drawImage(femaleStudent.femaleStudentImage, student.x, student.y, null);
         }
     }
     public void startSimulation(GUI.controlPanel controlPanel, JPanel classRoom) {
@@ -94,7 +103,7 @@ class Habitat { //класс среды с хранящимися данными
             lifeTimeFemale = controlPanel.lifeTimePanel.getFemaleLifeTime();
             P1 = controlPanel.comboBoxPanel.maleChance();
             P2 = controlPanel.comboBoxPanel.femaleChance();
-            period = gcd(N1*1000, N2*1000);
+            period = 50;
 
             simulation = true;
             System.out.println("Нажата клавиша B или нажата кнопка 'Старт', симуляция началась");
@@ -103,11 +112,20 @@ class Habitat { //класс среды с хранящимися данными
             timer[0].schedule(new TimerTask() {
                 @Override
                 public void run() {
-                    timeFromBeginning += 1000;
+                    timeFromBeginning += 50;
                     update(timeFromBeginning, classRoom);
                     controlPanel.showSimulationTimePanel.timeInfo.setText("Время симуляции: " + timeFromBeginning/1000 + "с");
                 }
-            }, 1000, 1000);
+            }, 50, 50);
+
+
+
+            maleAI.start();
+            if (maleAI.isAlive()) {
+                System.out.println("Поток работает и запущен");
+            }
+
+
         }
         else System.out.println("Нельзя начать симуляцию - симуляция идёт.");
     }
@@ -119,9 +137,15 @@ class Habitat { //класс среды с хранящимися данными
             timer[0].purge();
             timer[0].cancel();
             timer[0] = new Timer();
+
+            maleAI.threadWait();
+
+
             timeInfo.setText("Симуляция остановлена.");
             dialog.textArea.setText("Время симуляции:"  + simulationTime + "с\nКоличество студентов: " + maleStudents + "\nКоличество студенток: " + femaleStudents);
+
             if (infoAfterFinishVisible) {
+
                 dialog.setVisible(infoAfterFinishVisible);
             }
             else {
@@ -147,6 +171,7 @@ class Habitat { //класс среды с хранящимися данными
         maleStudents = 0;
         femaleStudents = 0;
         timeFromBeginning = 0;
+        studentID = 0;
 
     }
 }

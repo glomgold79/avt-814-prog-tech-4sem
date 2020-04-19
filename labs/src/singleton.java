@@ -13,15 +13,16 @@ class Singleton { // паттерн - Singleton
         return instance;
     }
 
-    private LinkedList<student> students = new LinkedList<>(); // массив со студентами
+    private LinkedList<student> students = new LinkedList<>();
     private HashSet<Integer> studentsID = new HashSet<>(); // идентификаторы "живых" объектов
     private TreeMap<Integer, Long> timeOfDeath = new TreeMap<>(); // время смерти объектор, ключ - строка-идентиификатор из HashSet, значение - время смерти Long
 
     public void addStudent(student student) {
-
-        students.add(student);
-        studentsID.add(student.studentID);
-        timeOfDeath.put(student.studentID, student.timeOfDeath);
+        synchronized (students) {
+            students.add(student);
+            studentsID.add(student.studentID);
+            timeOfDeath.put(student.studentID, student.timeOfDeath);
+        }
     }
     public LinkedList<student> getStudents() {
         return students;
@@ -33,39 +34,40 @@ class Singleton { // паттерн - Singleton
         return students.get(studentIndex);
     }
     public void checkList(long timeFromBeginning, Habitat habitat) { // проверка списков для удаления
-
-        ArrayList<Integer> indexesForDelete = new ArrayList<>();
-
-        for(Map.Entry e : timeOfDeath.entrySet()) {
-            if (timeFromBeginning >= (long) e.getValue()) {
-                indexesForDelete.add((int) e.getKey());
-            }
-        }
-
-        for (int i = 0; i < indexesForDelete.size(); i++) { // обход массива с идентификаторами объектов для удалениия
-            int key = indexesForDelete.get(i);
-            habitat.numberOfStudents--;
-            studentsID.remove(key);
-            timeOfDeath.remove(key);
-
-            int index = 0;
-            for (int j = 0; j < students.size(); j++) {
-                student student = students.get(j);
-                if (student.studentID == key) {
-                    if (student instanceof maleStudent) {
-                        habitat.maleStudents--;
-                    }
-                    else habitat.femaleStudents--;
-                    index = j;
-                    break;
+        synchronized (students) {
+            ArrayList<Integer> indexesForDelete = new ArrayList<>();
+            for (Map.Entry e : timeOfDeath.entrySet()) {
+                if (timeFromBeginning >= (long) e.getValue()) {
+                    indexesForDelete.add((int) e.getKey());
                 }
             }
-            students.remove(index);
+            for (int i = 0; i < indexesForDelete.size(); i++) { // обход массива с идентификаторами объектов для удалениия
+                int key = indexesForDelete.get(i);
+                habitat.numberOfStudents--;
+                studentsID.remove(key);
+                timeOfDeath.remove(key);
+
+                int index = 0;
+                for (int j = 0; j < students.size(); j++) {
+                    student student = students.get(j);
+                    if (student.studentID == key) {
+                        if (student instanceof maleStudent) {
+                            habitat.maleStudents--;
+                        }
+                        else habitat.femaleStudents--;
+                        index = j;
+                        break;
+                    }
+                }
+                students.remove(index);
+            }
         }
     }
     public void zero() {
-        students.clear();
-        studentsID.clear();
-        timeOfDeath.clear();
+        synchronized (students) {
+            students.clear();
+            studentsID.clear();
+            timeOfDeath.clear();
+        }
     }
 }
