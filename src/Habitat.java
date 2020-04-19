@@ -27,12 +27,16 @@ public class Habitat {
                 if (time == Singleton.getVector().get(i).BirthTime + Ordinary.TimeOfLife) {
                     Rabbit.AllQuantity--;
                     Ordinary.OrdinaryQuantity--;
+                    Singleton.getHashMap().remove(Singleton.getVector().get(i).ID);
+                    Singleton.getTreeSetID().remove(Singleton.getVector().get(i).ID);
                     Singleton.getVector().remove(i);
                 }
             } else {
                 if (time == Singleton.getVector().get(i).BirthTime + Albino.TimeOfLife) {
                     Rabbit.AllQuantity--;
                     Albino.AlbinoQuantity--;
+                    Singleton.getHashMap().remove(Singleton.getVector().get(i).ID);
+                    Singleton.getTreeSetID().remove(Singleton.getVector().get(i).ID);
                     Singleton.getVector().remove(i);
                 }
             }
