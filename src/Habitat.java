@@ -5,7 +5,7 @@ public class Habitat {
 
     private static AbstactFactory factory = new RabbitFactory();
 
-    private static GUI gui;
+    public static GUI gui;
 
     Habitat(int Width, int Height) {
         gui = new GUI(Width, Height);
@@ -13,12 +13,12 @@ public class Habitat {
 
     public static void Update(long time) {
         if (time % NOrdinary == 0 && Math.random() < POrdinary) {
-            Singleton.getVector().add(factory.creatOrdinary(Math.random(), Math.random(), time));
+            Singleton.getVector().add(factory.createOrdinary((int)(Math.random() * gui.jPanelImage.getWidth()), (int)(Math.random() * gui.jPanelControl.getHeight()) , time));
             Singleton.getTreeSetID().add(Singleton.getVector().lastElement().ID);
             Singleton.getHashMap().put(Singleton.getVector().lastElement().ID, Singleton.getVector().lastElement().BirthTime);
         }
         if (time % NAlbino == 0 && (double)Albino.getAlbinoQuantity() / Rabbit.getAllQuantity() < KAlbino) {
-            Singleton.getVector().add(factory.creatAlbino(Math.random(), Math.random(), time));
+            Singleton.getVector().add(factory.createAlbino((int)(Math.random() * gui.jPanelImage.getWidth()), (int)(Math.random() * gui.jPanelControl.getHeight()), time));
             Singleton.getTreeSetID().add(Singleton.getVector().lastElement().ID);
             Singleton.getHashMap().put(Singleton.getVector().lastElement().ID, Singleton.getVector().lastElement().BirthTime);
         }

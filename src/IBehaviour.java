@@ -1,8 +1,8 @@
 public interface IBehaviour {
 
-    void setX(double X);
-    double getX();
-    void setY(double Y);
-    double getY();
+    void setX(int X);
+    int getX();
+    void setY(int Y);
+    int getY();
 
 }

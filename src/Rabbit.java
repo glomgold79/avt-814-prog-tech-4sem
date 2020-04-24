@@ -7,7 +7,7 @@ public abstract class Rabbit implements IBehaviour {
 
     public static int AllQuantity = 0;
     private static long staticID = 0;
-    protected double X, Y;
+    protected int X, Y;
     protected long BirthTime;
     protected long ID;
     protected BufferedImage img;
@@ -15,10 +15,8 @@ public abstract class Rabbit implements IBehaviour {
     protected void openImage(String pathname) {
         try {
             img = ImageIO.read(new File(pathname));
-        } catch (IOException Ex) {
-            System.out.println(Ex);
-        }
-    };
+        } catch (IOException ignored) { }
+    }
 
     public BufferedImage getImg() {
         return img;
@@ -26,7 +24,7 @@ public abstract class Rabbit implements IBehaviour {
 
     Rabbit() { AllQuantity++; }
 
-    Rabbit(double X, double Y, long BirthTime) {
+    Rabbit(int X, int Y, long BirthTime) {
         ID = staticID++;
         AllQuantity++;
         this.X = X;
@@ -38,17 +36,13 @@ public abstract class Rabbit implements IBehaviour {
         return AllQuantity;
     }
 
-    public long getID() {
-        return ID;
-    }
-
     @Override
-    public void setX(double X) { this.X = X; }
+    public void setX(int X) { this.X = X; }
     @Override
-    public double getX() { return X; }
+    public int getX() { return X; }
     @Override
-    public void setY(double Y) { this.Y = Y; }
+    public void setY(int Y) { this.Y = Y; }
     @Override
-    public double getY() { return Y; }
+    public int getY() { return Y; }
 
 }

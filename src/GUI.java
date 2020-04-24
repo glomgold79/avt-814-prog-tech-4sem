@@ -1,12 +1,11 @@
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -16,13 +15,18 @@ public class GUI extends JFrame {
     boolean flag_is_work = false;
     private Timer timer;
     private static BufferedImage BackgroundImg;
-    private final double RabbitSize = 0.15; // [0, 1]
     private long cumulativePeriod = 0;
     private final long period = 1;
+    private AlbinoAI albinoAI = new AlbinoAI();
+    private boolean isAlbinoAI = false;
+    private OrdinaryAI ordinaryAI = new OrdinaryAI();
+    private boolean isOrdinaryAI = false;
 
     JPanel jPanelImage = new JPanel(), jPanelControl = new JPanel();
     JButton jButtonStart = new JButton("Старт"), jButtonStop = new JButton("Стоп");
     JButton jButtonObjects = new JButton("Текущие объекты");
+    JButton jButtonAlbinoAI = new JButton("Движение альбиносов");
+    JButton jButtonOrdinaryAI = new JButton("Движение обыкновенных");
     JLabel jLabel = new JLabel();
     JLabel jLabelK = new JLabel("Задать K:");
     JLabel jLabelP = new JLabel("Задать P:");
@@ -30,21 +34,29 @@ public class GUI extends JFrame {
     JLabel jLabelNAlbino = new JLabel("Задать N для альбиносов:");
     JLabel jLabelBirthTimeOrdinary = new JLabel("Задать время жизни обыкновенных:");
     JLabel jLabelBirthTimeAlbino = new JLabel("Задать время жизни альбиносов:");
+    JLabel jLabelOrdinaryPriority = new JLabel("Приоритет обыкновенных");
+    JLabel jLabelAlbinoPriority = new JLabel("Приоритет альбиносов");
     JDialog jDialog = new JDialog(this,"Информация о симуляции", true);
     JDialog jDialogObjects = new JDialog(this,"Текущие объекты",true);
     JTextArea jTextArea = new JTextArea();
     JTextArea jTextAreaObjects = new JTextArea();
     JButton jButtonOk = new JButton("Окей"), jButtonCancel = new JButton("Отмена");
-    JComboBox jComboBox = new JComboBox();
-    JList jList = new JList();
+    JComboBox<String> jComboBox = new JComboBox<>();
+    JComboBox<Integer> jComboBoxOrdinaryPriority = new JComboBox<>();
+    JComboBox<Integer> jComboBoxAlbinoPriority = new JComboBox<>();
+    JList<String> jList = new JList<>();
     JTextField jTextFieldNOrdinary = new JTextField();
     JTextField jTextFieldNAlbino = new JTextField();
     JTextField jTextFieldLiveTimeOrdinary = new JTextField();
     JTextField jTextFieldLiveTimeAlbino = new JTextField();
 
+
     Boolean RadioButtonBoolean = false;
 
-    public GUI(int Width, int Height){
+    public GUI(int Width, int Height) {
+        albinoAI.start();
+        ordinaryAI.start();
+
         jDialog.setSize(200,350);
         jDialog.setLocation(350,200);
         jDialog.setLayout(new GridLayout(3,1, 15,15));
@@ -60,16 +72,15 @@ public class GUI extends JFrame {
 
         try {
             BackgroundImg = ImageIO.read(new File("./Images/Field.jpg"));
-        } catch (IOException Ex) {
-            System.out.println(Ex);
-        }
+        } catch (IOException ignored) { }
+
         setTitle("Молнер Василий АВТ-814 Вариант №4");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setPreferredSize(new Dimension(Width, Height));
         setFocusable(true);
         setLocation(200,0);
-        creatMenuBar();
-        creatPanelUI(getContentPane());
+        createMenuBar();
+        createPanelUI(getContentPane());
         pack();
         setVisible(true);
         StartKeyListener();
@@ -98,8 +109,8 @@ public class GUI extends JFrame {
     }
 
     private void ActionStart() {
-        Habitat.POrdinary = (double) Integer.parseInt((String) jComboBox.getSelectedItem()) / 100;
-        Habitat.KAlbino = (double) Integer.parseInt((String) jList.getSelectedValue()) / 100;
+        Habitat.POrdinary = (double) Integer.parseInt((String) Objects.requireNonNull(jComboBox.getSelectedItem())) / 100;
+        Habitat.KAlbino = (double) Integer.parseInt(jList.getSelectedValue()) / 100;
         try {
             Habitat.NOrdinary = Integer.parseInt(jTextFieldNOrdinary.getText());
             Habitat.NAlbino = Integer.parseInt(jTextFieldNAlbino.getText());
@@ -121,12 +132,7 @@ public class GUI extends JFrame {
             jTextFieldLiveTimeOrdinary.setText("100");
             jTextFieldLiveTimeAlbino.setText("80");
 
-            jButtonExOk.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    jDialogEx.setVisible(false);
-                }
-            });
+            jButtonExOk.addActionListener(e -> jDialogEx.setVisible(false));
 
             jDialogEx.setVisible(true);
             return;
@@ -170,17 +176,16 @@ public class GUI extends JFrame {
 
     private void ActionShowText() {
         jLabel.setFont(new Font("TimesRoman", Font.BOLD, 12));
-        String string = new String(
-                "Время " + cumulativePeriod + " миллисекунд");
+        String string = "Время " + cumulativePeriod + " миллисекунд";
         jLabel.setText(string);
         add(jLabel);
         setVisible(true);
     }
 
     private void ActionShowObjects() {
-        String string = new String();
+        StringBuilder string = new StringBuilder();
         for (Rabbit rabbit : Singleton.getVector()) {
-            string += (rabbit.ID + " "  + rabbit.BirthTime + "\n");
+            string.append(rabbit.ID).append(" ").append(rabbit.BirthTime).append("\n");
         }
         jTextAreaObjects.setText("Ключ/Время рождения\n" + string);
         jDialogObjects.setVisible(true);
@@ -194,14 +199,16 @@ public class GUI extends JFrame {
 
         offScreenGraphics.drawImage(BackgroundImg, 0,0, w, h,null);
         for (Rabbit rab : Singleton.getVector()) {
-            offScreenGraphics.drawImage(rab.getImg(), (int)(rab.getX()*w),(int)(rab.getY()*h), (int)(RabbitSize*w), (int)(RabbitSize*h), null);
+            // [0, 1]
+            double rabbitSize = 0.15;
+            offScreenGraphics.drawImage(rab.getImg(), rab.getX() * 2,rab.getY() * 2, (int)(rabbitSize *w), (int)(rabbitSize *h), null);
         }
 
         //вывод изображение на фрейм
         jPanelImage.getGraphics().drawImage(offScreenImage,0,0,w/2,h/2,null); //делю на 2, чтобы вернуться к размерам фрейма
     }
 
-    private void creatPanelUI(Container container) {
+    private void createPanelUI(Container container) {
         container.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
         container.setLayout(new GridBagLayout());
 
@@ -225,15 +232,23 @@ public class GUI extends JFrame {
         ButtonGroup group = new ButtonGroup();
         JRadioButton jRadioButtonShowTime = new JRadioButton("Показать время симуляции"),
                      jRadioButtonNoShowTime = new JRadioButton("Не показывать время симуляции");
+        jRadioButtonNoShowTime.setSelected(true);
         group.add(jRadioButtonShowTime);
         group.add(jRadioButtonNoShowTime);
 
-        String item[] = new String[11];
+        String[] item = new String[11];
         for (int i = 0; i <= 10; i++) {
             item[i] = Integer.toString(i*10);
             jComboBox.addItem(Integer.toString(i*10));
         }
         jComboBox.setSelectedIndex(5);
+
+        for (int i = 0; i < 11; i++) {
+            jComboBoxOrdinaryPriority.addItem(i);
+            jComboBoxAlbinoPriority.addItem(i);
+        }
+        jComboBoxOrdinaryPriority.setSelectedIndex(6);
+        jComboBoxAlbinoPriority.setSelectedIndex(2);
 
         jList.setListData(item);
         jList.setSelectedIndex(7);
@@ -249,7 +264,7 @@ public class GUI extends JFrame {
         jTextFieldLiveTimeOrdinary.setText("100");
         jTextFieldLiveTimeAlbino.setText("80");
 
-        jPanelControl.setLayout(new GridLayout(19,1,5,5));
+        jPanelControl.setLayout(new GridLayout(25,1,5,5));
         jPanelControl.add(jButtonStart);
         jPanelControl.add(jButtonStop);
         jPanelControl.add(jRadioButtonShowTime);
@@ -268,121 +283,83 @@ public class GUI extends JFrame {
         jPanelControl.add(jLabelBirthTimeAlbino);
         jPanelControl.add(jTextFieldLiveTimeAlbino);
         jPanelControl.add(jButtonObjects);
+        jPanelControl.add(jButtonOrdinaryAI);
+        jPanelControl.add(jButtonAlbinoAI);
+        jPanelControl.add(jLabelOrdinaryPriority);
+        jPanelControl.add(jComboBoxOrdinaryPriority);
+        jPanelControl.add(jLabelAlbinoPriority);
+        jPanelControl.add(jComboBoxAlbinoPriority);
         jPanelControl.add(jLabel);
 
-        jButtonStart.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                ActionStart();
-            }
+        jButtonStart.addActionListener(e -> ActionStart());
+
+        jButtonStop.addActionListener(e -> ActionStop());
+
+        jButtonObjects.addActionListener(e -> ActionShowObjects());
+
+        jCheckBoxShowInf.addItemListener(e -> {
+            timer.cancel();
+            flag_is_work = false;
+            jTextArea.setText("Кроликов всего " + Rabbit.getAllQuantity() +
+                    "\nОбычных " + Ordinary.getOrdinaryQuantity() +
+                    "\nАльбиносов " + Albino.getAlbinoQuantity() +
+                    "\n\nВремени прошло " + cumulativePeriod + " миллисекунд");
+            jDialog.setVisible(true);
         });
 
-        jButtonStop.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                ActionStop();
-            }
+        jRadioButtonShowTime.addActionListener(e -> RadioButtonBoolean = true);
+
+        jRadioButtonNoShowTime.addActionListener(e -> {
+            RadioButtonBoolean = false;
+            jLabel.setVisible(false);
         });
 
-        jButtonObjects.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) { ActionShowObjects(); }
+        jComboBox.addActionListener(e -> Habitat.POrdinary = (double)Integer.parseInt((String) Objects.requireNonNull(jComboBox.getSelectedItem())) / 100);
+
+        jList.addListSelectionListener(e -> Habitat.KAlbino =  (double) Integer.parseInt((String)jList.getSelectedValue()) / 100);
+
+        jButtonCancel.addActionListener(e -> {
+            jDialog.setVisible(false);
+            ActionStart();
         });
 
-        jCheckBoxShowInf.addItemListener(new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-                timer.cancel();
-                flag_is_work = false;
-                jTextArea.setText("Кроликов всего " + Rabbit.getAllQuantity() +
-                        "\nОбычных " + Ordinary.getOrdinaryQuantity() +
-                        "\nАльбиносов " + Albino.getAlbinoQuantity() +
-                        "\n\nВремени прошло " + cumulativePeriod + " миллисекунд");
-                jDialog.setVisible(true);
-            }
+        jButtonOk.addActionListener(e -> {
+            jDialog.setVisible(false);
+            cumulativePeriod = 0;
+            Singleton.getVector().clear();
+            Singleton.getHashMap().clear();
+            Singleton.getTreeSetID().clear();
+            jButtonStop.setEnabled(false);
+            jButtonStart.setEnabled(true);
         });
 
-        jRadioButtonShowTime.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                RadioButtonBoolean = true;
-            }
+        jButtonAlbinoAI.addActionListener(e -> {
+            albinoAI.setPriority(jComboBoxAlbinoPriority.getSelectedIndex());
+            albinoAI.isActive = !albinoAI.isActive;
         });
 
-        jRadioButtonNoShowTime.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                RadioButtonBoolean = false;
-                jLabel.setVisible(false);
-            }
-        });
-
-        jComboBox.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Habitat.POrdinary = (double)Integer.parseInt((String)jComboBox.getSelectedItem()) / 100;
-            }
-        });
-
-        jList.addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                Habitat.KAlbino =  (double) Integer.parseInt((String)jList.getSelectedValue()) / 100;
-            }
-        });
-
-        jButtonCancel.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                jDialog.setVisible(false);
-                ActionStart();
-            }
-        });
-
-        jButtonOk.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                jDialog.setVisible(false);
-                cumulativePeriod = 0;
-                Singleton.getVector().clear();
-                Singleton.getHashMap().clear();
-                Singleton.getTreeSetID().clear();
-                jButtonStop.setEnabled(false);
-                jButtonStart.setEnabled(true);
-            }
+        jButtonOrdinaryAI.addActionListener(e -> {
+            ordinaryAI.setPriority(jComboBoxOrdinaryPriority.getSelectedIndex());
+            ordinaryAI.isAlive = !ordinaryAI.isAlive;
         });
     }
 
-    private void creatMenuBar() {
+    private void createMenuBar() {
         JMenuBar menuBar = new JMenuBar();
 
         JMenu SimulationMenu = new JMenu("Симуляция");
 
             JMenuItem StartItem = new JMenuItem("Старт");
             SimulationMenu.add(StartItem);
-            StartItem.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    ActionStart();
-                }
-            });
+            StartItem.addActionListener(e -> ActionStart());
 
             JMenuItem StopItem = new JMenuItem("Стоп");
             SimulationMenu.add(StopItem);
-            StopItem.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    ActionStop();
-                }
-            });
+            StopItem.addActionListener(e -> ActionStop());
 
             JMenuItem exitItem = new JMenuItem("Выход");
             SimulationMenu.add(exitItem);
-            exitItem.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    System.exit(0);
-                }
-            });
+            exitItem.addActionListener(e -> System.exit(0));
 
         JMenu SettingsMenu = new JMenu("Настройки вывода");
 
@@ -391,36 +368,25 @@ public class GUI extends JFrame {
 
                 JMenuItem YesItem = new JMenuItem("Да");
                 ShowTimeMenu.add(YesItem);
-                YesItem.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        RadioButtonBoolean = true;
-                    }
-                });
+                YesItem.addActionListener(e -> RadioButtonBoolean = true);
 
                 JMenuItem NoItem = new JMenuItem("Нет");
                 ShowTimeMenu.add(NoItem);
-                NoItem.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        RadioButtonBoolean = false;
-                        jLabel.setVisible(false);
-                    }
+                NoItem.addActionListener(e -> {
+                    RadioButtonBoolean = false;
+                    jLabel.setVisible(false);
                 });
 
             JMenuItem ShowInfItem = new JMenuItem("Информация о симуляции");
             SettingsMenu.add(ShowInfItem);
-            ShowInfItem.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    timer.cancel();
-                    flag_is_work = false;
-                    jTextArea.setText("Кроликов всего " + Rabbit.getAllQuantity() +
-                            "\nОбычных " + Ordinary.getOrdinaryQuantity() +
-                            "\nАльбиносов " + Albino.getAlbinoQuantity() +
-                            "\n\nВремени прошло " + cumulativePeriod + " миллисекунд");
-                    jDialog.setVisible(true);
-                }
+            ShowInfItem.addActionListener(e -> {
+                timer.cancel();
+                flag_is_work = false;
+                jTextArea.setText("Кроликов всего " + Rabbit.getAllQuantity() +
+                        "\nОбычных " + Ordinary.getOrdinaryQuantity() +
+                        "\nАльбиносов " + Albino.getAlbinoQuantity() +
+                        "\n\nВремени прошло " + cumulativePeriod + " миллисекунд");
+                jDialog.setVisible(true);
             });
 
         menuBar.add(SimulationMenu);
@@ -428,5 +394,4 @@ public class GUI extends JFrame {
 
         setJMenuBar(menuBar);
     }
-
 }
