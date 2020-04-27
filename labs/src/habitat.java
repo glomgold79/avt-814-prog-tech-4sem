@@ -11,6 +11,8 @@ class Habitat { //класс среды с хранящимися данными
     int N1, N2; // время генерации студентов и студенток соответсвенно
     int lifeTimeMale, lifeTimeFemale; // время жизни студентов и студенток соответственно
     double P1, P2; // вероятность генерации студентов и студенток соответсвенно
+    int maleAIPriority; //приоритет потоков
+    int femaleAIPriority;
 
     int windowX, windowY; //размеры области экрана
 
@@ -37,10 +39,13 @@ class Habitat { //класс среды с хранящимися данными
     boolean infoVision = false; // показывается ли информация о времени симуляции
     boolean simulation = false; //идёт ли симуляция
     boolean infoAfterFinishVisible = false; //будет ли отображено диалоговое окно после остановки симуляции
-    boolean threadsOnPause = false; // нахожятся ли потоки в режиме сна (если остановить симуляцию и потом запустить еще раз)
+    boolean maleAIStarted = false; // заупскался ли поток поведения студентов
+    boolean femaleAIStarted = false; // запускался ли поток поведения студенток
 
-    maleStudentsAI maleAI; // поток поведения студентов
-    //femaleStudentsAI femaleAI; // поток поведения студенток
+    public maleStudentsAI maleAI; // поток поведения студентов
+    public boolean statusMaleAI = false;
+    public femaleStudentsAI femaleAI; // поток поведения студенток
+    public boolean statusFemaleAI = false;
 
 
     public Habitat(int x, int y) {
@@ -48,7 +53,7 @@ class Habitat { //класс среды с хранящимися данными
         windowY = y;
 
         maleAI = new maleStudentsAI();
-        //femaleAI = new femaleStudentsAI();
+        femaleAI = new femaleStudentsAI();
     }
 
     public void update(long timeFromBeginning, JPanel classRoom) { //метод обновления среды, генерация новых студентов
@@ -103,8 +108,9 @@ class Habitat { //класс среды с хранящимися данными
             lifeTimeFemale = controlPanel.lifeTimePanel.getFemaleLifeTime();
             P1 = controlPanel.comboBoxPanel.maleChance();
             P2 = controlPanel.comboBoxPanel.femaleChance();
+            maleAIPriority = controlPanel.comboBoxPriorityPanel.malePriority();
+            femaleAIPriority = controlPanel.comboBoxPriorityPanel.femalePriority();
             period = 50;
-
             simulation = true;
             System.out.println("Нажата клавиша B или нажата кнопка 'Старт', симуляция началась");
             //начало симуляции
@@ -118,11 +124,22 @@ class Habitat { //класс среды с хранящимися данными
                 }
             }, 50, 50);
 
+            if (!maleAIStarted) {
+                maleAI.startSimulation(maleAIPriority);
+                statusMaleAI = true;
+                maleAIStarted = true;
+            } else {
+                maleAI.rerun(maleAIPriority);
+                statusMaleAI = true;
+            }
 
-
-            maleAI.start();
-            if (maleAI.isAlive()) {
-                System.out.println("Поток работает и запущен");
+            if (!femaleAIStarted) {
+                femaleAI.startSimulation(femaleAIPriority);
+                statusFemaleAI = true;
+                femaleAIStarted = true;
+            } else {
+                femaleAI.rerun(femaleAIPriority);
+                statusFemaleAI = true;
             }
 
 
@@ -133,13 +150,14 @@ class Habitat { //класс среды с хранящимися данными
 
         if (simulation) {
 
+            maleAI.threadWait();
+            femaleAI.threadWait();
+            statusMaleAI = false;
+            statusFemaleAI = false;
             int simulationTime = (int) timeFromBeginning/1000;
             timer[0].purge();
             timer[0].cancel();
             timer[0] = new Timer();
-
-            maleAI.threadWait();
-
 
             timeInfo.setText("Симуляция остановлена.");
             dialog.textArea.setText("Время симуляции:"  + simulationTime + "с\nКоличество студентов: " + maleStudents + "\nКоличество студенток: " + femaleStudents);
@@ -147,11 +165,17 @@ class Habitat { //класс среды с хранящимися данными
             if (infoAfterFinishVisible) {
 
                 dialog.setVisible(infoAfterFinishVisible);
+                maleAI.rerun(maleAIPriority);
+                femaleAI.rerun(femaleAIPriority);
+                statusMaleAI = true;
+                statusFemaleAI = true;
             }
             else {
                 zero();
                 classRoom.repaint();
                 simulation = false;
+                statusMaleAI = false;
+                statusFemaleAI = false;
             }
 
 

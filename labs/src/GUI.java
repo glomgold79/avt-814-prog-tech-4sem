@@ -12,7 +12,7 @@ import static javax.swing.BoxLayout.Y_AXIS;
 
 class GUI extends JFrame { //класс основного окна программы
 
-    int windowX = 1000, windowY = 800; // размеры окна программы
+    int windowX = 1000, windowY = 850; // размеры окна программы
     Habitat habitat; // среда выполнения
 
     public class classRoom extends JPanel { //класс области, в которой рисуются студенты
@@ -266,6 +266,81 @@ class GUI extends JFrame { //класс основного окна програ
                 this.add(button);
             }
         }
+        class controlAIPanel extends JPanel {
+
+            public JButton maleAIButton, femaleAIButton;
+            controlAIPanel(){ // панель для управления потоками поведения людей\
+                super();
+                this.setLayout(new FlowLayout());
+
+                JPanel maleAIPanel = new JPanel(); //панель с кнопкой для интеллекта студентов
+                JLabel maleAILabel = new JLabel("maleAI: ");
+                maleAIButton = new JButton("on");
+                maleAIButton.setEnabled(false);
+                maleAIButton.setRequestFocusEnabled(false);
+
+                JPanel femaleAIPanel = new JPanel();
+                JLabel femaleAILabel = new JLabel("femaleAI: ");
+                femaleAIButton = new JButton("on");
+                femaleAIButton.setEnabled(false);
+                femaleAIButton.setRequestFocusEnabled(false);
+
+                maleAIPanel.add(maleAILabel);
+                maleAIPanel.add(maleAIButton);
+
+                femaleAIPanel.add(femaleAILabel);
+                femaleAIPanel.add(femaleAIButton);
+
+
+                this.add(maleAIPanel);
+                this.add(femaleAIPanel);
+
+            }
+        }
+        class comboBoxPriorityPanel extends JPanel {
+
+            public JComboBox maleComboBox;
+            public  JComboBox femaleComboBox;
+            comboBoxPriorityPanel() { // панель с двумя выпадающими списками (2 комбобокса)
+                super();
+                this.setLayout(new FlowLayout());
+
+                JPanel malePanel = new JPanel();
+                String[] maleElements = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"};
+                maleComboBox = new JComboBox(maleElements);
+                maleComboBox.setSelectedIndex(4);
+                maleComboBox.setRequestFocusEnabled(false);
+                JLabel textMaleComboBox = new JLabel("Приоритет maleAI:");
+                malePanel.add(textMaleComboBox);
+                malePanel.add(maleComboBox);
+
+                JPanel femalePanel = new JPanel();
+                String[] femaleElements = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"};
+                femaleComboBox = new JComboBox(femaleElements);
+                femaleComboBox.setSelectedIndex(4);
+                femaleComboBox.setRequestFocusEnabled(false);
+                JLabel textFemaleComboBox = new JLabel("Приоритет femaleAI: ");
+                femalePanel.add(textFemaleComboBox);
+                femalePanel.add(femaleComboBox);
+
+                this.add(malePanel);
+                this.add(femalePanel);
+
+            }
+
+            public int malePriority () {
+                int priority;
+                priority = maleComboBox.getSelectedIndex() + 1;
+                return priority;
+            }
+
+            public int femalePriority () {
+                int priority;
+                priority = femaleComboBox.getSelectedIndex() + 1;
+                return priority;
+            }
+
+        }
 
 
         public startStopButtonsPanel startStopButtonsPanel;
@@ -276,6 +351,8 @@ class GUI extends JFrame { //класс основного окна програ
         public lifeTimePanel lifeTimePanel;
         public comboBoxPanel comboBoxPanel;
         public showAliveStudentsPanel showAliveStudentsPanel;
+        public controlAIPanel controlAIPanel;
+        public comboBoxPriorityPanel comboBoxPriorityPanel;
 
         controlPanel() {
             super();
@@ -290,6 +367,8 @@ class GUI extends JFrame { //класс основного окна програ
             lifeTimePanel = new lifeTimePanel();
             comboBoxPanel = new comboBoxPanel();
             showAliveStudentsPanel = new showAliveStudentsPanel();
+            controlAIPanel = new controlAIPanel();
+            comboBoxPriorityPanel = new comboBoxPriorityPanel();
 
             showSimulationTimePanel = new showSimulationTimePanel();
             showSimulationTimePanel.setVisible(false);
@@ -301,6 +380,8 @@ class GUI extends JFrame { //класс основного окна програ
             this.add(lifeTimePanel);
             this.add(comboBoxPanel);
             this.add(showAliveStudentsPanel);
+            this.add(controlAIPanel);
+            this.add(comboBoxPriorityPanel);
             this.add(startStopButtonsPanel);
 
         }
@@ -560,9 +641,36 @@ class GUI extends JFrame { //класс основного окна програ
         });
 
 
-
         menu.startSimulation.addActionListener(startSimulation);
         menu.stopSimulation.addActionListener(stopSimulation);
+
+        controlPanel.controlAIPanel.maleAIButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                if (habitat.maleAI.simulation){
+                    habitat.maleAI.threadWait();
+                    habitat.statusMaleAI = false;
+                } else {
+                    habitat.maleAI.rerun(habitat.maleAIPriority);
+                    habitat.statusMaleAI = true;
+                }
+               checkAllButtons(habitat);
+
+            }
+        });
+        controlPanel.controlAIPanel.femaleAIButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                if (habitat.femaleAI.simulation){
+                    habitat.femaleAI.threadWait();
+                    habitat.statusFemaleAI = false;
+                } else {
+                    habitat.femaleAI.rerun(habitat.femaleAIPriority);
+                    habitat.statusFemaleAI = true;
+                }
+                checkAllButtons(habitat);
+            }
+        });
 
 
         focusMainWindow();
@@ -575,8 +683,21 @@ class GUI extends JFrame { //класс основного окна програ
     void checkAllButtons(Habitat habitat) {
         controlPanel.startStopButtonsPanel.startButton.setEnabled(!habitat.simulation);
         controlPanel.startStopButtonsPanel.stopButton.setEnabled(habitat.simulation);
+
+        controlPanel.controlAIPanel.maleAIButton.setEnabled(habitat.simulation);
+        controlPanel.controlAIPanel.femaleAIButton.setEnabled(habitat.simulation);
+
+        if (habitat.statusMaleAI){
+            controlPanel.controlAIPanel.maleAIButton.setText("off");
+        } else controlPanel.controlAIPanel.maleAIButton.setText("on");
+
+        if (habitat.statusFemaleAI) {
+            controlPanel.controlAIPanel.femaleAIButton.setText("off");
+        } else controlPanel.controlAIPanel.femaleAIButton.setText("on");
+
         menu.startSimulation.setEnabled(!habitat.simulation);
         menu.stopSimulation.setEnabled(habitat.simulation);
+
     }
     public void focusMainWindow() { // фокус на окноо
         this.requestFocus();
