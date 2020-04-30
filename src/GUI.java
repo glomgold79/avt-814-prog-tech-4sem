@@ -2,6 +2,7 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.*;
 import java.util.*;
 import java.util.Timer;
 import java.util.concurrent.atomic.AtomicLong;
@@ -10,7 +11,8 @@ class GUI extends JFrame {
     private boolean isTimerRunning = false,
             isTimeVisible = false,
             isStatisticsVisible = false,
-            isShowModalDialog = false;
+            isShowModalDialog = false,
+            isStatShow, isShowSimTime;
 
     static boolean stopDroneAI = true,
                    stopWorkerAI = true;
@@ -21,6 +23,11 @@ class GUI extends JFrame {
     private AtomicLong timeSum = new AtomicLong(0);
     private Timer timer;
     private long time;
+
+    static JComboBox<String> probComboBox;
+    static JSlider slider;
+    private JCheckBox statShow;
+    private JRadioButton showSimTime;
 
     private void start() {
         Habitat.array.clear();
@@ -69,6 +76,40 @@ class GUI extends JFrame {
         isTimerRunning = true;
     }
 
+    void saveConfig() throws IOException {
+        FileOutputStream outputStream = new FileOutputStream("data/config.txt");
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+        objectOutputStream.writeObject(statShow.isSelected() + "," + showSimTime.isSelected()
+                + "," + Habitat.N1 + "," + Habitat.N2 + ","
+                + Habitat.P + "," + Habitat.K + "," + Habitat.droneTimeOfLife + "," + Habitat.WorkerTimeOfLife);
+        System.out.println("Config saved.");
+        objectOutputStream.close();
+    }
+
+    void loadConfig() throws Exception {
+        FileInputStream fileInputStream = new FileInputStream("data/config.txt");
+        ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
+        String config = objectInputStream.readObject().toString();
+        String[] parts = config.split(",", 8);
+        for (int i = 0; i < 8; i++) {
+            System.out.println(parts[i]);
+        }
+
+        isStatShow = Boolean.valueOf(parts[0]);
+        isShowSimTime = Boolean.valueOf(parts[1]);
+        Habitat.N1 = Integer.valueOf(parts[2]);
+        Habitat.N2 = Integer.valueOf(parts[3]);
+        Habitat.P = Integer.valueOf(parts[4]);
+        Habitat.K = Integer.valueOf(parts[5]);
+        Habitat.droneTimeOfLife = Integer.valueOf(parts[6]);
+        Habitat.WorkerTimeOfLife = Integer.valueOf(parts[7]);
+    }
+
+
+
+
+
+
     GUI() {
         super("Bee's area");
         final int DEFAULT_X = 1500; // первоначальные размеры фрейма
@@ -79,9 +120,27 @@ class GUI extends JFrame {
         this.setIconImage(new ImageIcon("Icon.png").getImage());
         this.setLocationRelativeTo(null); // фрейм в центре экрана
         this.setFocusable(true); // фокус на фрейме при запуске
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                try {
+                    saveConfig();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+                System.exit(0);
+            }
+        });
+
+
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (ClassNotFoundException | IllegalAccessException | InstantiationException | UnsupportedLookAndFeelException e) {
+            e.printStackTrace();
+        }
+        try {
+            loadConfig();
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -262,7 +321,8 @@ class GUI extends JFrame {
         control.add(stopButton);
 
         // флажок показывать информацию. объединена в группу кнопок с ее дублированным вариантом в меню
-        JCheckBox statShow = new JCheckBox("Показывать информацию");
+        statShow = new JCheckBox("Показывать информацию");
+        statShow.setSelected(isStatShow);
         statShow.setBackground(control.getBackground());
         statShow.addActionListener(e -> {
             System.out.println("Information is shown/hidden.");
@@ -277,7 +337,8 @@ class GUI extends JFrame {
         control.add(timeRadioButtonPanel);
 
         // переключатели отображения времени симуляции
-        JRadioButton showSimTime = new JRadioButton("Показывать время симуляции");
+        showSimTime = new JRadioButton("Показывать время симуляции");
+        timeModule.setVisible(isShowSimTime);
         showSimTime.addActionListener(e -> {
             System.out.println("Simulation time is shown.");
             timeModule.setVisible(true);
@@ -388,18 +449,18 @@ class GUI extends JFrame {
 
         // вероятность трутня регулируется с помощью JComboBox
         probabilityPanel.add(new JLabel("Процент трутней:"));
-        JComboBox<String> comboBox = new JComboBox<>(items);
-        comboBox.setSelectedItem(Integer.toString(Habitat.K));
-        comboBox.addActionListener(e -> {
-            Habitat.K = Integer.valueOf(items[comboBox.getSelectedIndex()]);
+        probComboBox = new JComboBox<>(items);
+        probComboBox.setSelectedItem(Integer.toString(Habitat.K));
+        probComboBox.addActionListener(e -> {
+            Habitat.K = Integer.valueOf(items[probComboBox.getSelectedIndex()]);
             System.out.println("New probability of drones: " + Habitat.K);
             requestFocus();
         });
-        probabilityPanel.add(comboBox);
+        probabilityPanel.add(probComboBox);
 
         // вероятность рабочих регулируется с помощью JSlider
         probabilityPanel.add(new JLabel("Вероятность рождения рабочего:"));
-        JSlider slider = new JSlider(0, 100, Habitat.P);
+        slider = new JSlider(0, 100, Habitat.P);
         slider.setBackground(control.getBackground());
         slider.setMajorTickSpacing(10); // шаг 10 единиц
         slider.setPaintLabels(true); // отображение числовых меток (шаг 10 ед.)
@@ -583,7 +644,10 @@ class GUI extends JFrame {
         priorityPanel.add(priorityTextField);
 
 
-
+        JButton consoleButton = new JButton("Консоль");
+        consoleButton.setPreferredSize(buttonSize);
+        consoleButton.addActionListener(e -> new Console(this));
+        control.add(consoleButton);
 
 
 
@@ -601,8 +665,107 @@ class GUI extends JFrame {
          *
          * */
 
+
         JMenuBar menuBar = new JMenuBar();
         {
+            JMenu menuFile = new JMenu("Файл");
+            menuBar.add(menuFile);
+
+
+            JMenuItem saveItem = new JMenuItem("Сохранить");
+            menuFile.add(saveItem);
+            saveItem.addActionListener(e -> {
+
+                FileOutputStream outputStream = null;
+                try {
+                    outputStream = new FileOutputStream("data/save.dat");
+                } catch (FileNotFoundException e1) {
+                    e1.printStackTrace();
+                }
+                ObjectOutputStream objectOutputStream = null;
+                try {
+                    objectOutputStream = new ObjectOutputStream(outputStream);
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+                // сохраняем в файл
+                try {
+                    if (objectOutputStream != null) {
+                        objectOutputStream.writeObject(Habitat.array);
+                        objectOutputStream.writeObject(Habitat.identifiers);
+                        objectOutputStream.writeObject(Habitat.birthdays);
+                        System.out.println("Saved successfully!");
+                    }
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+
+                try {
+                    if (objectOutputStream != null) {
+                        objectOutputStream.close();
+                    }
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            });
+
+            JMenuItem loadItem = new JMenuItem("Загрузить");
+            menuFile.add(loadItem);
+            loadItem.addActionListener(e -> {
+                FileInputStream fileInputStream = null;
+                try {
+                    fileInputStream = new FileInputStream("data/save.dat");
+                } catch (FileNotFoundException e1) {
+                    e1.printStackTrace();
+                }
+                ObjectInputStream objectInputStream = null;
+                try {
+                    objectInputStream = new ObjectInputStream(fileInputStream);
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+
+                try {
+                    if (objectInputStream != null) {
+                        Habitat.array.clear();
+                        Habitat.numberOfDrones = 0;
+                        Habitat.numberOfWorkers = 0;
+                        time = 0;
+                        Habitat.array = (ArrayList<Bee>) objectInputStream.readObject();
+                        for (int i = 0; i < Habitat.array.size(); i++) {
+                            Habitat.array.get(i).timeOfBirth = 0;
+                        }
+                    }
+                } catch (IOException | ClassNotFoundException e1) {
+                    e1.printStackTrace();
+                }
+
+                try {
+                    if (objectInputStream != null) {
+                        Habitat.identifiers = (HashSet<Integer>) objectInputStream.readObject();
+                    }
+                } catch (IOException | ClassNotFoundException e1) {
+                    e1.printStackTrace();
+                }
+                int mapSize = Habitat.array.size();
+                Habitat.birthdays = new TreeMap<>();
+                for (int i = 0; i < mapSize; i++) {
+                    Habitat.birthdays.put(Habitat.array.get(i).id, 0L);
+                }
+                for (int i = 0; i < Habitat.array.size(); i++) {
+                    if (Habitat.array.get(i) instanceof Drone) {
+                        Habitat.numberOfDrones++;
+                    } else {
+                        Habitat.numberOfWorkers++;
+                    }
+                }
+            });
+
+
+
+
+
+
             JMenu menuSimulation = new JMenu("Управление");
             menuBar.add(menuSimulation);
 
@@ -611,7 +774,7 @@ class GUI extends JFrame {
                 SimulationTask updating = null;
 
                 public void actionPerformed(ActionEvent e) {
-                    if (!isTimerRunning) { // без условия таймер бы ускорялся
+                    if (!isTimerRunning) {
                         if (isStatisticsVisible) {
                             statistics.setVisible(false);
                             isStatisticsVisible = false;
@@ -713,4 +876,6 @@ class GUI extends JFrame {
 
         this.setVisible(true);
     }
+
+
 }

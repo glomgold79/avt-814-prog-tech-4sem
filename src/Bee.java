@@ -3,9 +3,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.Serializable;
 
-abstract public class Bee implements IBehaviour {
+abstract public class Bee implements IBehaviour,Serializable {
     int x, y;
-    Image img;
+    ImageIcon img;
     int id;
     long timeOfBirth;
     int V;

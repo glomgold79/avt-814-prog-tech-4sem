@@ -10,7 +10,7 @@ class VPanel extends JPanel {
     protected void paintComponent(Graphics g){
         super.paintComponent(g);
         for (int i = 0; i < Habitat.array.size(); i++) {
-            g.drawImage(Habitat.array.get(i).img, Habitat.array.get(i).getX(),
+            g.drawImage(Habitat.array.get(i).img.getImage(), Habitat.array.get(i).getX(),
                     Habitat.array.get(i).getY(), null);
         }
     }

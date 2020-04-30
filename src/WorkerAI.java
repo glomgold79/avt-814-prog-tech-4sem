@@ -5,7 +5,7 @@ public class WorkerAI extends BaseAI {
     @Override
     public void run() {
         while (move) {
-        //   synchronized (tmp) {
+           synchronized (tmp) {
                 if (GUI.stopWorkerAI) {
                     try {
                         tmp.wait();
@@ -18,7 +18,7 @@ public class WorkerAI extends BaseAI {
                         Habitat.array.get(i).move();
                     }
                 }
-         //  }
+           }
 
             try {
                 Thread.sleep(10);

@@ -1,3 +1,4 @@
+import javax.swing.*;
 import java.awt.*;
 import java.util.Random;
 
@@ -9,12 +10,13 @@ public class Drone extends Bee {
             end =true,
             borderX=true,
             borderY=true;
-    Drone(Image img, int x, int y, long timeOfBirth,int id) {
+
+    Drone(ImageIcon img, int x, int y, long timeOfBirth) {
         this.img = img;
         this.x = x;
         this.y = y;
         this.timeOfBirth = timeOfBirth;
-        this.id=id;
+   //     this.id=id;
         V = 1; // скорость, пикселя в секунду
         Vx=V;
         Vy=V;

@@ -1,7 +1,7 @@
 
 
 import javax.swing.*;
-import java.awt.*;
+
 import java.util.*;
 
 class Habitat {
@@ -17,20 +17,19 @@ class Habitat {
     static int iK = 0;
     static int droneTimeOfLife = 20;
     static int WorkerTimeOfLife = 20;
-    private Image droneImg = new ImageIcon("drone.png").getImage();
-    private Image workerImg = new ImageIcon("worker.png").getImage();
+    private ImageIcon droneImg = new ImageIcon("drone.png");
+    private ImageIcon workerImg = new ImageIcon("worker.png");
     static int areaSizeX, areaSizeY; // размер области генерации
-    public long time=0;
+
     Habitat(int x, int y) {
-        areaSizeX = x- 250;
-        areaSizeY = y- 250;
+        areaSizeX = x - 250;
+        areaSizeY = y - 250;
         array = new ArrayList<>();
         identifiers = new HashSet<>();
         birthdays = new TreeMap<>();
     }
 
     void update(long time) {
-        this.time=time;
         int x, y, id;
         System.out.println("time: " + time);
         for (int i = 0; i < Habitat.array.size(); i++) {
@@ -50,26 +49,35 @@ class Habitat {
             }
         }
         if (iK < (Habitat.array.size() * K / 100) && time % N1 == 0 && time != 0) { // вероятность выполнения условия
-            x = new Random().nextInt(areaSizeX );
-            y = new Random().nextInt(areaSizeY );
-            id = new Random().nextInt();
-            Drone drone = new Drone(droneImg, x, y, time,id);
-            array.add(drone);
-            identifiers.add(id);
-            birthdays.put(id, drone.timeOfBirth);
-            System.out.println("drone has generated. time of birth: " + drone.timeOfBirth + ", id: " + id);
-            numberOfDrones++;
+            x = new Random().nextInt(areaSizeX);
+            y = new Random().nextInt(areaSizeY);
+            Drone drone = new Drone(droneImg, x, y, time);
+            boolean isNumberExists = false;
+            while (!isNumberExists) {
+                id = new Random().nextInt();
+                isNumberExists = identifiers.add(id);
+                if (isNumberExists) drone.setID(id);
+                array.add(drone);
+                birthdays.put(id, drone.timeOfBirth);
+                System.out.println("Drone has generated. time of birth: " + drone.timeOfBirth + ", id: " + id +
+                        "\nx: " + x + " y: " + y);
+            }
             iK++;
+            numberOfDrones++;
         }
         if (new Random().nextInt(100) < P && time % N2 == 0 && time != 0) { // вероятность выполнения условия
-            x = new Random().nextInt(areaSizeX );
-            y = new Random().nextInt(areaSizeY );
-            id = new Random().nextInt();
-            Worker worker = new Worker(workerImg, x, y, time,id);
-            array.add(worker);
-            identifiers.add(id);
-            birthdays.put(id, worker.timeOfBirth);
-            System.out.println("Worker has generated. time of birth: " + worker.timeOfBirth + ", id: " + id);
+            x = new Random().nextInt(areaSizeX);
+            y = new Random().nextInt(areaSizeY);
+            Worker worker = new Worker(workerImg, x, y, time);
+            boolean isNumberExists = false;
+            while (!isNumberExists) {
+                id = new Random().nextInt();
+                isNumberExists = identifiers.add(id);
+                if (isNumberExists) worker.setID(id);
+                array.add(worker);
+                birthdays.put(id, worker.timeOfBirth);
+                System.out.println("Worker has generated. time of birth: " + worker.timeOfBirth + ", id: " + id);
+            }
             numberOfWorkers++;
         }
     }
