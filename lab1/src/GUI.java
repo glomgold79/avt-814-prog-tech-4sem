@@ -21,6 +21,8 @@ public class GUI extends JFrame {
     private AlbinoAI albinoAI = new AlbinoAI();
     private OrdinaryAI ordinaryAI = new OrdinaryAI();
 
+    private Client client;
+
     Console console;
 
     JPanel jPanelImage = new JPanel(), jPanelControl = new JPanel();
@@ -40,6 +42,7 @@ public class GUI extends JFrame {
     JDialog jDialog = new JDialog(this,"Информация о симуляции", true);
     JDialog jDialogObjects = new JDialog(this,"Текущие объекты",true);
     JDialog jDialogConsole = new JDialog(this,"Консоль",false);
+    JDialog jDialogClient = new JDialog(this, "Клиент", false);
     JTextArea jTextArea = new JTextArea();
     JTextArea jTextAreaObjects = new JTextArea();
     JTextArea jTextAreaConsole = new JTextArea();
@@ -48,6 +51,7 @@ public class GUI extends JFrame {
     JComboBox<Integer> jComboBoxOrdinaryPriority = new JComboBox<>();
     JComboBox<Integer> jComboBoxAlbinoPriority = new JComboBox<>();
     JList<String> jList = new JList<>();
+    JList<String> jListOfClients = new JList<>();
     JTextField jTextFieldNOrdinary = new JTextField();
     JTextField jTextFieldNAlbino = new JTextField();
     JTextField jTextFieldLiveTimeOrdinary = new JTextField();
@@ -85,7 +89,7 @@ public class GUI extends JFrame {
         console = new Console();
         try {
             pipedWriter.connect(console.pipedReader);
-        } catch (IOException ex) { }
+        } catch (IOException ignored) { }
         albinoAI.start();
         ordinaryAI.start();
 
@@ -122,6 +126,55 @@ public class GUI extends JFrame {
             }
         });
         jDialogConsole.add(jTextAreaConsole);
+
+        client = new Client();
+        jDialogClient.setSize(300,400);
+        jDialogClient.setLocation(100,100);
+        DefaultListModel<String> listModel = new DefaultListModel<>();
+        jListOfClients.setModel(listModel);
+        jListOfClients.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                super.keyPressed(e);
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    client.RequestConfigs(jListOfClients.getSelectedValue());
+                    try {
+                        fileReader = new FileReader("Configuration.txt");
+                    } catch (FileNotFoundException ex) {
+                        ex.printStackTrace();
+                    }
+                    scanner = new Scanner(fileReader);
+                    P = scanner.nextInt();
+                    K = scanner.nextInt();
+                    NO = scanner.nextInt();
+                    NA = scanner.nextInt();
+                    LTO = scanner.nextInt();
+                    LTA = scanner.nextInt();
+                    PO = scanner.nextInt();
+                    PA = scanner.nextInt();
+                    scanner.close();
+                    try {
+                        fileReader.close();
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
+                    jComboBox.setSelectedIndex(P);
+                    jList.setSelectedIndex(K);
+                    jTextFieldNOrdinary.setText(Integer.toString(NO));
+                    jTextFieldNAlbino.setText(Integer.toString(NA));
+                    jTextFieldLiveTimeOrdinary.setText(Integer.toString(LTO));
+                    jTextFieldLiveTimeAlbino.setText(Integer.toString(LTA));
+                    jComboBoxOrdinaryPriority.setSelectedIndex(PO);
+                    jComboBoxAlbinoPriority.setSelectedIndex(PA);
+                }
+                if (e.getKeyCode() == KeyEvent.VK_U) {
+                    listModel.removeAllElements();
+                    for (String string : client.getUsersOnline())
+                        listModel.addElement(string);
+                }
+            }
+        });
+        jDialogClient.add(jListOfClients);
 
         try {
             BackgroundImg = ImageIO.read(new File("./Images/Field.jpg"));
@@ -246,9 +299,10 @@ public class GUI extends JFrame {
         Graphics offScreenGraphics= offScreenImage.getGraphics();
 
         offScreenGraphics.drawImage(BackgroundImg, 0,0, w, h,null);
-        for (Rabbit rab : Singleton.getVector()) {
+        for (int i = 0; i < Singleton.getVector().size(); i++) {
             // [0, 1]
             double rabbitSize = 0.15;
+            Rabbit rab = Singleton.getVector().get(i);
             BufferedImage bufferedImage = rab instanceof Ordinary ? (Ordinary.getImg()) : (Albino.getImg());
             offScreenGraphics.drawImage(bufferedImage, rab.getX() * 2,rab.getY() * 2, (int)(rabbitSize *w), (int)(rabbitSize *h), null);
         }
@@ -459,14 +513,16 @@ public class GUI extends JFrame {
             });
 
         JMenuItem StartConsole = new JMenuItem("Консоль");
-        StartConsole.addActionListener(e -> {
-            jDialogConsole.setVisible(true);
-        });
+        StartConsole.addActionListener(e -> jDialogConsole.setVisible(true));
+
+        JMenuItem ClientItem = new JMenuItem("Клиент");
+        ClientItem.addActionListener(e -> jDialogClient.setVisible(true));
 
         menuBar.add(FileMenu);
         menuBar.add(SimulationMenu);
         menuBar.add(SettingsMenu);
         menuBar.add(StartConsole);
+        menuBar.add(ClientItem);
 
         setJMenuBar(menuBar);
     }

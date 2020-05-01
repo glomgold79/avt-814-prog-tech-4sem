@@ -28,19 +28,23 @@ public class Console extends Thread {
             if (len == 11) {
                 N = Integer.parseInt(string.substring(9,11));
             }
+            if (len == 12) {
+                N = 100;
+            }
         }
         double persent = (100 - ((double) N)) / 100 * Albino.AlbinoQuantity;
 
         synchronized (Singleton.getVector()) {
-            while (Albino.AlbinoQuantity != (int) persent) {
-                int i = 0;
+            int i = 0;
+            while (Albino.AlbinoQuantity != (int) persent && Singleton.getVector().size() != i) {
                 if (Singleton.getVector().get(i) instanceof Albino) {
                     Rabbit.AllQuantity--;
                     Albino.AlbinoQuantity--;
                     Singleton.getHashMap().remove(Singleton.getVector().get(i).ID);
                     Singleton.getTreeSetID().remove(Singleton.getVector().get(i).ID);
-                    Singleton.getVector().remove(i++);
+                    Singleton.getVector().remove(i);
                 }
+                i++;
             }
         }
     }
