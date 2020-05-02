@@ -39,12 +39,14 @@ class Habitat {
                 identifiers.remove(i);
                 --i;
                 --iK;
+                --numberOfDrones;
                 System.out.println("Drone has deleted.");
             } else if (Habitat.array.get(i) instanceof Worker && (time - Habitat.array.get(i).timeOfBirth) >= WorkerTimeOfLife) {
                 array.remove(i);
                 birthdays.remove(i);
                 identifiers.remove(i);
                 --i;
+                --numberOfWorkers;
                 System.out.println("Worker has deleted.");
             }
         }
