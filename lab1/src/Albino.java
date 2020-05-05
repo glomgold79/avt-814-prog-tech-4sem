@@ -7,7 +7,7 @@ import java.io.Serializable;
 public class Albino extends Rabbit implements Serializable {
 
     public static int AlbinoQuantity = 0;
-    public static long TimeOfLife;
+    public static long TimeOfLife = 200;
     public boolean DirectionIsToRight = true;
     protected static BufferedImage img;
 

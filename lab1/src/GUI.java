@@ -16,7 +16,7 @@ public class GUI extends JFrame {
     boolean flag_is_work = false;
     private Timer timer;
     private static BufferedImage BackgroundImg;
-    private long cumulativePeriod = 0;
+    public long cumulativePeriod = 0;
     private final long period = 1;
     private AlbinoAI albinoAI = new AlbinoAI();
     private OrdinaryAI ordinaryAI = new OrdinaryAI();
@@ -484,7 +484,7 @@ public class GUI extends JFrame {
             SimulationMenu.add(exitItem);
             exitItem.addActionListener(e -> System.exit(0));
 
-        JMenu SettingsMenu = new JMenu("Настройки вывода");
+        JMenu SettingsMenu = new JMenu("Настройки");
 
             JMenu ShowTimeMenu = new JMenu("Показывать время");
             SettingsMenu.add(ShowTimeMenu);
@@ -512,6 +512,35 @@ public class GUI extends JFrame {
                 jDialog.setVisible(true);
             });
 
+        JMenu jMenuDB = new JMenu("База данных");
+            JMenu jMenuSave = new JMenu("Сохранить");
+            jMenuDB.add(jMenuSave);
+                JMenuItem jMenuItemSaveAll = new JMenuItem("Всех");
+                jMenuSave.add(jMenuItemSaveAll);
+                jMenuItemSaveAll.addActionListener(e -> new DBSaver().SaveAll());
+
+                JMenuItem jMenuItemSaveAlbino = new JMenuItem("Альбиносов");
+                jMenuSave.add(jMenuItemSaveAlbino);
+                jMenuItemSaveAlbino.addActionListener(e -> new DBSaver().SaveAlbino());
+
+                JMenuItem jMenuItemSaveOrdinary = new JMenuItem("Обыкновенных");
+                jMenuSave.add(jMenuItemSaveOrdinary);
+                jMenuItemSaveOrdinary.addActionListener(e -> new DBSaver().SaveOrdinary());
+
+            JMenu jMenuLoad = new JMenu("Загрузить");
+            jMenuDB.add(jMenuLoad);
+                JMenuItem jMenuItemLoadAll = new JMenuItem("Всех");
+                jMenuLoad.add(jMenuItemLoadAll);
+                jMenuItemLoadAll.addActionListener(e -> new DBSaver().LoadAll());
+
+                JMenuItem jMenuItemLoadAlbino = new JMenuItem("Альбиносов");
+                jMenuLoad.add(jMenuItemLoadAlbino);
+                jMenuItemLoadAlbino.addActionListener(e -> new DBSaver().LoadAlbino());
+
+                JMenuItem jMenuItemLoadOrdinary = new JMenuItem("Обыкновенных");
+                jMenuLoad.add(jMenuItemLoadOrdinary);
+                jMenuItemLoadOrdinary.addActionListener(e -> new DBSaver().LoadOrdinary());
+
         JMenuItem StartConsole = new JMenuItem("Консоль");
         StartConsole.addActionListener(e -> jDialogConsole.setVisible(true));
 
@@ -521,6 +550,7 @@ public class GUI extends JFrame {
         menuBar.add(FileMenu);
         menuBar.add(SimulationMenu);
         menuBar.add(SettingsMenu);
+        menuBar.add(jMenuDB);
         menuBar.add(StartConsole);
         menuBar.add(ClientItem);
 

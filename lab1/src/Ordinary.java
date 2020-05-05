@@ -7,8 +7,8 @@ import java.io.Serializable;
 public class Ordinary extends Rabbit implements Serializable {
 
     public static int OrdinaryQuantity = 0;
-    public static long TimeOfLife;
-    public int targetX, targetY;
+    public static long TimeOfLife = 200;
+    public int targetX = Habitat.gui.jPanelImage.getWidth() / 2, targetY = Habitat.gui.jPanelImage.getHeight() / 2;
     protected static BufferedImage img;
 
     @Override
