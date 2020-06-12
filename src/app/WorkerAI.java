@@ -1,0 +1,37 @@
+package app;
+
+import app.BaseAI;
+import app.GUI;
+import app.Habitat;
+import app.Worker;
+
+public class WorkerAI extends BaseAI {
+
+    final Object tmp = new Object();
+
+    @Override
+    public void run() {
+        while (move) {
+           synchronized (tmp) {
+                if (GUI.stopWorkerAI) {
+                    try {
+                        tmp.wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                for (int i = 0; i < Habitat.array.size(); i++) {
+                    if (Habitat.array.get(i) instanceof Worker) {
+                        Habitat.array.get(i).move();
+                    }
+                }
+           }
+
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
